@@ -89,8 +89,6 @@ pins::pin_write(
   x = meta,
   name = "matt.dray/nhp_tagged_runs_meta", 
   type = "csv",
-  title = "NHP tagged-runs metadata",
-  description = "Some metadata for schemes' latest tagged model runs.",
   versioned = TRUE
 )
 ```
@@ -116,8 +114,6 @@ pins::pin_write(
   x = params_list,
   name = "matt.dray/nhp_tagged_runs_params", 
   type = "rds",
-  title = "NHP tagged-run params",
-  description = "Params from schemes' latest tagged model runs.",
   versioned = TRUE
 )
 ```
