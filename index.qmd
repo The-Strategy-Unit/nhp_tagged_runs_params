@@ -1,0 +1,119 @@
+---
+title: "Automated extraction of NHP tagged-run params"
+date: "last-modified"
+date-format: D MMM YYYY HH:mm
+format: html
+---
+
+```{r}
+#| label: check-env-vars
+#| results: "asis"
+#| echo: false
+
+required_env_vars <- c(
+  "AZ_TENANT_ID",
+  "AZ_STORAGE_EP",
+  "AZ_STORAGE_CONTAINER_RESULTS",
+  "AZ_STORAGE_CONTAINER_SUPPORT",
+  "NHP_ENCRYPT_KEY"
+)
+if (any(Sys.getenv(required_env_vars) == "")) {
+  cat("One of the following environment variables was not set, so exiting \n\n")
+  cat(paste("*", required_env_vars, collapse = "\n"), "\n\n")
+  knitr::knit_exit() 
+}
+```
+
+```{r}
+#| label: setup
+#| echo: false
+
+source("R/azure.R")
+```
+
+## Purpose
+
+A Quarto document deployed to Posit Connect that runs on schedule.
+
+Generates and [pins](https://pins.rstudio.com/):
+
+* a list containing the model params for each NHP scheme's latest [tagged run](https://connect.strategyunitwm.nhs.uk/nhp/tagged_runs)
+* a data.frame of metadata associated with those tagged runs
+
+This makes it easier and faster to ingest params data into products like the mitigators-comparison app, for example.
+
+You can access on Posit Connect the [params pin](https://connect.strategyunitwm.nhs.uk/content/32c7f642-e420-448d-b888-bf655fc8fa8b/) and the [metadata pin](https://connect.strategyunitwm.nhs.uk/content/811dbaf9-18fe-43aa-bf8e-06b0df66004e/) if you have sufficient permissions.
+
+## Code
+
+The steps are to:
+
+1. Identify on Azure the latest tagged runs, via metadata.
+1. Pin the metadata.
+1. Read the corresponding JSON files from Azure.
+1. Extract only the params element of each file and add to a named list.
+1. Pin the params.
+
+### Metadata
+
+Files are stored in two separate containers: one with results, one with supporting information.
+
+```{r}
+#| label: get-containers
+
+container_results <-
+  get_container(container_name = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS"))
+
+container_support <-
+  get_container(container_name = Sys.getenv("AZ_STORAGE_CONTAINER_SUPPORT"))
+```
+
+Read the metadata for the runs that are available and then isolate the ones tagged as 'final'. If no final run is found, choose the one labelled 'intermediate', otherwise 'initial'. Non-demographic growth (NDG) variant 2 is preferred.
+
+```{r}
+#| label: get-meta
+
+meta <- fetch_tagged_runs_meta(container_results, container_support)
+knitr::kable(meta)
+```
+
+Pin this metadata so it's [available to use](https://connect.strategyunitwm.nhs.uk/content/811dbaf9-18fe-43aa-bf8e-06b0df66004e/).
+
+```{r}
+#| label: pin-meta
+
+board <- pins::board_connect()
+
+pins::pin_write(
+  board,
+  x = meta,
+  name = "matt.dray/nhp_tagged_runs_meta", 
+  type = "csv",
+  versioned = TRUE
+)
+```
+
+### Params
+
+Given the metadata, read the corresponding `file` for each model run.
+
+```{r}
+#| label: get-params
+
+params_list <- fetch_tagged_runs_params(meta, container_results)
+names(params_list)
+```
+
+Pin the params so they're [available to use](https://connect.strategyunitwm.nhs.uk/content/32c7f642-e420-448d-b888-bf655fc8fa8b/).
+
+```{r}
+#| label: pin-params
+
+pins::pin_write(
+  board,
+  x = params_list,
+  name = "matt.dray/nhp_tagged_runs_params", 
+  type = "rds",
+  versioned = TRUE
+)
+```
