@@ -33,7 +33,7 @@ source("R/azure.R")
 
 ## Purpose
 
-A Quarto document deployed to Posit Connect that runs on schedule.
+A Quarto document deployed to Posit Connect that runs on schedule. The source is in the [The-Strategy-Unit/nhp_tagged_runs_params](https://github.com/The-Strategy-Unit/nhp_tagged_runs_params) GitHub repo.
 
 Generates and [pins](https://pins.rstudio.com/):
 
