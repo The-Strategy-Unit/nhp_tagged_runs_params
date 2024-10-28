@@ -105,16 +105,10 @@ fetch_tagged_runs_meta <- function(container_results, container_support) {
 
   latest_tagged_runs <- result_sets |>
     dplyr::filter(run_stage %in% run_stages) |>
-    dplyr::select(dataset, scenario, run_stage, file) |>
+    dplyr::select(dataset, scenario, create_datetime, run_stage, file) |>
     dplyr::mutate(run_stage = forcats::fct(run_stage, levels = run_stages)) |>
     dplyr::arrange(dataset, run_stage) |>  # run_stage will be ordered by level
-    dplyr::slice(1, .by = dataset) |>  # isolates the 'top' level within a scheme
-    dplyr::mutate(
-      run_stage = run_stage |>
-        as.character() |>  # convert from factor to allow string handling
-        stringr::str_remove("(_report)?_ndg\\d") |>
-        stringr::str_to_sentence()  # 'Initial', 'Intermediate', 'Final'
-    )
+    dplyr::slice(1, .by = dataset)  # 'top' run stage level by preference order
 
 }
 
