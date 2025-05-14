@@ -91,7 +91,7 @@ Pin this metadata so it's [available to use](https://connect.strategyunitwm.nhs.
 ```{r}
 #| label: pin-meta
 
-board <- pins::board_connect()
+board <- pins::board_connect(server = "https://connect.strategyunitwm.nhs.uk/")
 
 pins::pin_write(
   board,

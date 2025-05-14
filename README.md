@@ -26,15 +26,7 @@ See the [separate guidance](https://csucloudservices.sharepoint.com/:w:/r/sites/
 
 ## Redeploy
 
-If you make changes to the code in this repo, you can redeploy the report to Posit Connect like:
-
-``` r
-app_id <- rsconnect::deployments(".")[["appId"]]
-rsconnect::deployDoc(doc = "index.qmd", appId = app_id)
-```
-
-This checks for the 'app ID' in the rsconnect/ folder of your local project root, which is generated when you first deploy.
-Otherwise you can find the ID by opening the report from the Posit Connect 'Content' page and then looking for 'Content ID' in the Settings > Info panel of the interface.
+If you make changes to the code in this repo, you can redeploy the report to Posit Connect using the `deploy.R` script.
 
 ## Refresh
 
