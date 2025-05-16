@@ -7,7 +7,7 @@ deploy <- function(server_name, app_id) {
     server = server_name,
     appId = app_id,
     doc = "index.qmd",
-    appName = "nhp_tagged_runs_params",
+    appName = "nhp_tagged_runs_params_report",
     appTitle = "NHP: tagged-runs param-extraction report",
     lint = FALSE,
     forceUpdate = TRUE
@@ -15,4 +15,4 @@ deploy <- function(server_name, app_id) {
 }
 
 deploy("connect.strategyunitwm.nhs.uk", 302)
-deploy("connect.su.mlcsu.org", 111)
+deploy("connect.su.mlcsu.org", 115)
