@@ -29,11 +29,13 @@ if (any(Sys.getenv(required_env_vars) == "")) {
 #| echo: false
 
 source("R/azure.R")
+source("R/pin.R")
 ```
 
 ## Purpose
 
-A Quarto document deployed to Posit Connect that runs on schedule. The source is in the [The-Strategy-Unit/nhp_tagged_runs_params](https://github.com/The-Strategy-Unit/nhp_tagged_runs_params) GitHub repo.
+A Quarto document deployed to Posit Connect that runs on schedule.
+The source is in the [The-Strategy-Unit/nhp_tagged_runs_params](https://github.com/The-Strategy-Unit/nhp_tagged_runs_params) GitHub repo.
 
 Generates and [pins](https://pins.rstudio.com/):
 
@@ -48,8 +50,8 @@ In future, the params and results files will be stored separately, reducing the 
 
 You can access on Posit Connect (login- and permissions-dependent):
 
-* the [params pin](https://connect.strategyunitwm.nhs.uk/content/32c7f642-e420-448d-b888-bf655fc8fa8b/)
-* the [metadata pin](https://connect.strategyunitwm.nhs.uk/content/811dbaf9-18fe-43aa-bf8e-06b0df66004e/)
+* the params pin at matt.dray/nhp_tagged_runs_params
+* the metadata pin at matt.dray/nhp_tagged_runs_meta
 
 ## Code
 
@@ -63,7 +65,22 @@ The steps in this report are to:
 
 The pins will not be updated if there is no new data.
 
+### Boards
+
+Try to connect to the pin boards on both servers (both are active in May 2025, though the new board will become the main one and eventually take the name of the old server).
+
+```{r}
+#| label: board-connect
+
+possibly_connect <- purrr::possibly(pins::board_connect)  # NULL on failure
+
+board <- possibly_connect(server = "connect.strategyunitwm.nhs.uk")
+board_new <- possibly_connect(server = "connect.su.mlcsu.org")
+```
+
 ### Metadata
+
+#### Data
 
 Files are stored in two separate containers: one with results, one with supporting information.
 
@@ -86,23 +103,20 @@ meta <- fetch_tagged_runs_meta(container_results, container_support)
 knitr::kable(meta)
 ```
 
-Pin this metadata so it's [available to use](https://connect.strategyunitwm.nhs.uk/content/811dbaf9-18fe-43aa-bf8e-06b0df66004e/).
+#### Pin
+
+Pin this metadata to both servers (if possible, depending on board availability). The `pin_if_board_exists()` function will only write the pin if a connection to the board has been successful.
 
 ```{r}
 #| label: pin-meta
-
-board <- pins::board_connect()
-
-pins::pin_write(
-  board,
-  x = meta,
-  name = "matt.dray/nhp_tagged_runs_meta", 
-  type = "csv",
-  versioned = TRUE
-)
+ 
+pin_if_board_exists(board, meta, "matt.dray/nhp_tagged_runs_meta")
+pin_if_board_exists(board_new, meta, "matt.dray/nhp_tagged_runs_meta")
 ```
 
 ### Params
+
+#### Data
 
 Given the metadata, read the corresponding `file` for each model run.
 
@@ -113,16 +127,13 @@ params_list <- fetch_tagged_runs_params(meta, container_results)
 names(params_list)
 ```
 
-Pin the params so they're [available to use](https://connect.strategyunitwm.nhs.uk/content/32c7f642-e420-448d-b888-bf655fc8fa8b/).
+#### Pin
+
+Pin the params (if possible, depending on board availability).
 
 ```{r}
 #| label: pin-params
 
-pins::pin_write(
-  board,
-  x = params_list,
-  name = "matt.dray/nhp_tagged_runs_params", 
-  type = "rds",
-  versioned = TRUE
-)
+pin_if_board_exists(board, params_list, "matt.dray/nhp_tagged_runs_params")
+pin_if_board_exists(board_new, params_list, "matt.dray/nhp_tagged_runs_params")
 ```
