@@ -67,15 +67,12 @@ The pins will not be updated if there is no new data.
 
 ### Boards
 
-Try to connect to the pin boards on both servers (both are active in May 2025, though the new board will become the main one and eventually take the name of the old server).
+Connect to the server.
 
 ```{r}
 #| label: board-connect
 
-possibly_connect <- purrr::possibly(pins::board_connect)  # NULL on failure
-
-board <- possibly_connect(server = "connect.strategyunitwm.nhs.uk")
-board_new <- possibly_connect(server = "connect.su.mlcsu.org")
+board <- pins::board_connect(server = "https://connect.strategyunitwm.nhs.uk")
 ```
 
 ### Metadata
@@ -105,20 +102,19 @@ knitr::kable(meta)
 
 #### Pin
 
-Pin this metadata to both servers (if possible, depending on board availability). The `pin_if_board_exists()` function will only write the pin if a connection to the board has been successful.
+Pin this metadata to the server. The `pin_if_board_exists()` function will only write the pin if a connection to the board has been successful.
 
 ```{r}
 #| label: pin-meta
  
 pin_if_board_exists(board, meta, "matt.dray/nhp_tagged_runs_meta")
-pin_if_board_exists(board_new, meta, "matt.dray/nhp_tagged_runs_meta")
 ```
 
 ### Params
 
 #### Data
 
-Given the metadata, read the corresponding `file` for each model run.
+Given the metadata, read the corresponding `file` for each model run. This will take a short while.
 
 ```{r}
 #| label: get-params
@@ -135,5 +131,4 @@ Pin the params (if possible, depending on board availability).
 #| label: pin-params
 
 pin_if_board_exists(board, params_list, "matt.dray/nhp_tagged_runs_params")
-pin_if_board_exists(board_new, params_list, "matt.dray/nhp_tagged_runs_params")
 ```
