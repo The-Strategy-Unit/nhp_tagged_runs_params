@@ -94,13 +94,11 @@ fetch_tagged_runs_meta <- function(container_results, container_support) {
 
   # Run stages to keep/convert to factor levels (in order of preference for
   # selection). This set may expand in future as we add more NDG variants.
+  ndg_values <- c(2, 3, 1)  # preference order (2 is main, 3 and 1 secondary)
   run_stages <- c(
-    "final_report_ndg2",  # first level because it's preferred
-    "final_report_ndg1",
-    "intermediate_ndg2",
-    "intermediate_ndg1",
-    "initial_ndg2",
-    "initial_ndg1"
+    paste0("final_report_ndg", ndg_values),
+    paste0("intermediate_ndg", ndg_values),
+    paste0("initial_ndg", ndg_values)
   )
 
   latest_tagged_runs <- result_sets |>
