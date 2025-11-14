@@ -1,110 +1,101 @@
-# Get container details
-get_container <- function(
-  tenant = Sys.getenv("AZ_TENANT_ID"),
+#' Connect to an Azure Blob Storage Container
+#' @param app_id Azure Active Directory application (client) ID. Defaults to the
+#'   `AZ_APP_ID` environment variable. If empty, authentication will rely on
+#'   Managed Identity (see [`get_az_token()`]).
+#' @param ep_uri Azure Blob Storage endpoint URI. Defaults to the
+#'   `AZ_STORAGE_EP` environment variable. Should follow the format:
+#'   `"https://<storage-account>.blob.core.windows.net/"`.
+#' @param container_name The name of the blob container to connect to.
+#' @return An AzureStor container object created by
+#'   `AzureStor::storage_container()`.
+connect_az_container <- function(
   app_id = Sys.getenv("AZ_APP_ID"),
   ep_uri = Sys.getenv("AZ_STORAGE_EP"),
-  container_name # env var "AZ_STORAGE_CONTAINER_RESULTS" or "*_SUPPORT"
+  container_name
 ) {
-  # if the app_id variable is empty, we assume that this is running on an Azure
-  # VM, and then we will use Managed Identities for authentication.
-  token <- if (app_id != "") {
-    AzureAuth::get_azure_token(
-      resource = "https://storage.azure.com",
-      tenant = tenant,
-      app = app_id,
-      auth_type = "device_code",
-      use_cache = TRUE # avoid browser-authorisation prompt
-    )
-  } else {
-    AzureAuth::get_managed_token("https://storage.azure.com/")
-  }
-
+  token <- get_az_token(app_id, ep_uri)
   ep_uri |>
     AzureStor::blob_endpoint(token = token) |>
     AzureStor::storage_container(container_name)
 }
 
-# Fetch result-file information
-get_nhp_result_sets <- function(container_results, container_support) {
-  providers <- get_nhp_providers(container_support)
-  allowed_datasets = get_nhp_user_allowed_datasets(NULL, providers)
-  allowed <- tibble::tibble(dataset = allowed_datasets)
+#' Read an Azure Table Storage Table into a Tibble
+#' @param app_id Azure Active Directory application (client) ID. Defaults to
+#'   `AZ_APP_ID`. If empty, Managed Identity authentication will be used (via
+#'   [`get_az_token()`]).
+#' @param ep_uri The Azure Table Storage endpoint URI. Defaults to `AZ_TABLE_EP`
+#'   and should include a trailing slash, e.g.:
+#'   `"https://<storage-account>.table.core.windows.net/"`.
+#' @param table_name The name of the Azure Table to query. Defaults to
+#'   `AZ_TABLE_NAME`.
+#' @return A tibble containing all table entities. Each entity is converted from
+#'   JSON into a tibble and row-bound into a single data frame.
+read_az_table <- function(
+  app_id = Sys.getenv("AZ_APP_ID"),
+  ep_uri = Sys.getenv("AZ_TABLE_EP"),
+  table_name = Sys.getenv("AZ_TABLE_NAME")
+) {
+  token <- get_az_token(app_id, ep_uri)
 
-  container_results |>
-    AzureStor::list_blobs("prod", info = "all", recursive = TRUE) |>
-    dplyr::filter(!.data[["isdir"]]) |>
-    purrr::pluck("name") |>
-    purrr::set_names() |>
-    purrr::map(
-      \(name, ...) AzureStor::get_storage_metadata(container_results, name)
-    ) |>
-    dplyr::bind_rows(.id = "file") |>
-    dplyr::semi_join(allowed, by = dplyr::join_by("dataset")) |>
-    dplyr::mutate(dplyr::across("viewable", as.logical))
+  req <- httr2::request(glue::glue("{ep_uri}{table_name}")) |>
+    httr2::req_auth_bearer_token(token$credentials$access_token) |>
+    httr2::req_headers(
+      `x-ms-version` = "2023-11-03",
+      Accept = "application/json;odata=nometadata"
+    )
+  resp <- httr2::req_perform(req)
+  entities <- httr2::resp_body_json(resp)
+
+  entities[[1]] |> # response is contained in a list
+    purrr::map(tibble::as_tibble) |>
+    purrr::list_rbind()
 }
 
-# Identify scheme codes for which data can be read
-get_nhp_user_allowed_datasets <- function(groups = NULL, providers) {
-  if (!(is.null(groups) || any(c("nhp_devs", "nhp_power_users") %in% groups))) {
-    a <- groups |>
-      stringr::str_subset("^nhp_provider_") |>
-      stringr::str_remove("^nhp_provider_")
-    providers <- intersect(providers, a)
+#' Acquire an Azure Active Directory Token for Storage Authentication
+#' @param app_id Azure Active Directory application (client) ID. Used when
+#'   running the function locally. If empty (e.g. when deployed), the
+#'   function uses Managed Identity authentication.
+#' @return An AzureAuth token object (OAuth or Managed Identity), suitable for
+#'   authenticating against Azure Storage services.
+get_az_token <- function(app_id) {
+  if (app_id != "") {
+    AzureAuth::get_azure_token(
+      resource = "https://storage.azure.com",
+      tenant = "common",
+      app = app_id,
+      auth_type = "authorization_code",
+      use_cache = TRUE # avoid browser-authorisation prompt
+    )
+  } else {
+    AzureAuth::get_managed_token("https://storage.azure.com/")
   }
-
-  c("synthetic", providers)
 }
 
-# Read the providers file
-get_nhp_providers <- function(container_support) {
-  raw_json <- AzureStor::storage_download(
-    container_support,
-    src = "providers.json",
-    dest = NULL
-  )
-
-  raw_json |>
-    rawToChar() |>
-    jsonlite::fromJSON(simplifyVector = TRUE)
-}
-
-# Read the results jsons
-get_nhp_results <- function(container_results, file) {
-  temp_file <- withr::local_tempfile()
-  AzureStor::download_blob(container_results, file, temp_file)
-
-  readBin(temp_file, raw(), n = file.size(temp_file)) |>
-    jsonlite::parse_gzjson_raw(simplifyVector = FALSE) # no need to parse
-}
-
-# Isolate metadata for model-runs that have a run_stage metadata label on Azure
-fetch_tagged_runs_meta <- function(container_results, container_support) {
-  result_sets <- get_nhp_result_sets(container_results, container_support)
-
-  # Run stages to keep/convert to factor levels (in order of preference for
-  # selection). This set may expand in future as we add more NDG variants.
-  run_stages <- c(
-    "final_report_ndg2", # first level because it's preferred
-    "final_report_ndg1",
-    "intermediate_ndg2",
-    "intermediate_ndg1",
-    "initial_ndg2",
-    "initial_ndg1"
-  )
-
-  latest_tagged_runs <- result_sets |>
-    dplyr::filter(run_stage %in% run_stages) |>
-    dplyr::select(dataset, scenario, create_datetime, run_stage, file) |>
-    dplyr::mutate(run_stage = forcats::fct(run_stage, levels = run_stages)) |>
-    dplyr::arrange(dataset, run_stage) |> # run_stage will be ordered by level
-    dplyr::slice(1, .by = dataset) # 'top' run stage level by preference order
-}
-
-# Read json files given Azure paths
-fetch_tagged_runs_params <- function(runs_meta, container_results) {
-  runs_meta |>
-    dplyr::pull(file) |> # paths to jsons
-    purrr::map(\(file) get_nhp_results(container_results, file)) |>
-    purrr::map(purrr::pluck("params")) |>
-    purrr::set_names(runs_meta$dataset) # name with scheme code
+#' Prepare and Standardize Azure Table Storage Metadata
+#' @param az_table A tibble of entities returned from Azure Table Storage,
+#'   typically produced by [`read_az_table()`]. Must contain at least the
+#'   columns `PartitionKey`, `scenario`, `create_datetime`, `run_stage`,
+#'   `results_dir`, and `results_file`.
+#' @return A tibble containing the columns:
+#'   - `dataset` (scheme code)
+#'   - `scenario` (scenario name)
+#'   - `create_datetime` (needed becuase `scenario` isn't unique)
+#'   - `run_stage` ('final_report_ndg2', etc)
+#'   - `file` (path to the `params.json` file, or `.json.gz` containing params)
+prepare_az_table <- function(az_table) {
+  az_table |>
+    dplyr::mutate(
+      file = dplyr::if_else(
+        is.na(results_dir),
+        results_file,
+        fs::path(results_dir, "params.json") |> as.character()
+      )
+    ) |>
+    dplyr::select(
+      dataset = PartitionKey,
+      scenario,
+      create_datetime,
+      run_stage,
+      file
+    )
 }
