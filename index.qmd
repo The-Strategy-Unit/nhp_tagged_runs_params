@@ -20,7 +20,7 @@ required_env_vars <- c(
 if (any(Sys.getenv(required_env_vars) == "")) {
   cat("One of the following environment variables was not set, so exiting \n\n")
   cat(paste("*", required_env_vars, collapse = "\n"), "\n\n")
-  knitr::knit_exit() 
+  knitr::knit_exit()
 }
 ```
 
@@ -109,7 +109,7 @@ Pin this metadata to both servers (if possible, depending on board availability)
 
 ```{r}
 #| label: pin-meta
- 
+
 pin_if_board_exists(board, meta, "matt.dray/nhp_tagged_runs_meta")
 pin_if_board_exists(board_new, meta, "matt.dray/nhp_tagged_runs_meta")
 ```
