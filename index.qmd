@@ -113,6 +113,7 @@ pin_if_board_exists(board, meta, "matt.dray/nhp_tagged_runs_meta")
 
 Given the metadata, read the corresponding `file` for each model run.
 The `get_all_params()` function will read from the standalone `params.json` of new-style aggregated results, otherwise it falls back to unzipping the old-style `.json.gz` file and extracting the `params` element.
+This may take a short while.
 
 ```{r}
 #| label: get-params
@@ -129,5 +130,4 @@ Pin the params (if possible, depending on board availability).
 #| label: pin-params
 
 pin_if_board_exists(board, params_list, "matt.dray/nhp_tagged_runs_params")
-pin_if_board_exists(board_new, params_list, "matt.dray/nhp_tagged_runs_params")
 ```
