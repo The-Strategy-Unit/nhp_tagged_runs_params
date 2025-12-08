@@ -1,7 +1,7 @@
 #' Connect to an Azure Blob Storage Container
 #' @param app_id Azure Active Directory application (client) ID. Defaults to the
 #'   `AZ_APP_ID` environment variable. If empty, authentication will rely on
-#'   Managed Identity (see [`get_az_token()`]).
+#'   Managed Identity (see [get_az_token]).
 #' @param ep_uri Azure Blob Storage endpoint URI. Defaults to the
 #'   `AZ_STORAGE_EP` environment variable. Should follow the format:
 #'   `"https://<storage-account>.blob.core.windows.net/"`.
@@ -13,7 +13,7 @@ connect_az_container <- function(
   ep_uri = Sys.getenv("AZ_STORAGE_EP"),
   container_name
 ) {
-  token <- get_az_token(app_id, ep_uri)
+  token <- get_az_token(app_id)
   ep_uri |>
     AzureStor::blob_endpoint(token = token) |>
     AzureStor::storage_container(container_name)
@@ -22,7 +22,7 @@ connect_az_container <- function(
 #' Read an Azure Table Storage Table into a Tibble
 #' @param app_id Azure Active Directory application (client) ID. Defaults to
 #'   `AZ_APP_ID`. If empty, Managed Identity authentication will be used (via
-#'   [`get_az_token()`]).
+#'   [get_az_token]).
 #' @param ep_uri The Azure Table Storage endpoint URI. Defaults to `AZ_TABLE_EP`
 #'   and should include a trailing slash, e.g.:
 #'   `"https://<storage-account>.table.core.windows.net/"`.
@@ -35,7 +35,7 @@ read_az_table <- function(
   ep_uri = Sys.getenv("AZ_TABLE_EP"),
   table_name = Sys.getenv("AZ_TABLE_NAME")
 ) {
-  token <- get_az_token(app_id, ep_uri)
+  token <- get_az_token(app_id)
 
   req <- httr2::request(glue::glue("{ep_uri}{table_name}")) |>
     httr2::req_auth_bearer_token(token$credentials$access_token) |>
@@ -73,7 +73,7 @@ get_az_token <- function(app_id) {
 
 #' Prepare and Standardize Azure Table Storage Metadata
 #' @param az_table A tibble of entities returned from Azure Table Storage,
-#'   typically produced by [`read_az_table()`]. Must contain at least the
+#'   typically produced by [read_az_table]. Must contain at least the
 #'   columns `PartitionKey`, `scenario`, `create_datetime`, `run_stage`,
 #'   `results_dir`, and `results_file`.
 #' @return A tibble containing the columns:
