@@ -16,8 +16,8 @@ In future, the params and results files will be stored separately, reducing the 
 The products of this repo are available on Posit Connect (login required):
 
 * [the rendered report](https://connect.strategyunitwm.nhs.uk/nhp/tagged-runs-params-report/)
-* [the params pin](https://connect.strategyunitwm.nhs.uk/content/32c7f642-e420-448d-b888-bf655fc8fa8b/)
-* [the params metadata pin](https://connect.strategyunitwm.nhs.uk/content/811dbaf9-18fe-43aa-bf8e-06b0df66004e/)
+* [the params pin](https://connect.strategyunitwm.nhs.uk/content/2784320a-dfa4-4694-866f-9c84741568da/)
+* [the params metadata pin](https://connect.strategyunitwm.nhs.uk/content/022974aa-dd54-4e33-aed3-42c34f81bc9d/)
 
 ## Data
 
