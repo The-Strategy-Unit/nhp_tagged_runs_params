@@ -16,8 +16,10 @@ pin_if_board_exists <- function(
 
   if (is_board) {
     object_class <- class(object_to_pin)
-    if ("data.frame" %in% object_class) file_type <- "csv"
-    if ("list" %in% object_class) file_type <- "rds"
+    file_type <- "rds"
+    if ("data.frame" %in% object_class) {
+      file_type <- "csv"
+    }
 
     pins::pin_write(
       board_connection,
