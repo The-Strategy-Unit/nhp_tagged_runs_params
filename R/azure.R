@@ -79,7 +79,7 @@ get_az_token <- function(app_id) {
 #' @return A tibble containing the columns:
 #'   - `dataset` (scheme code)
 #'   - `scenario` (scenario name)
-#'   - `create_datetime` (needed becuase `scenario` isn't unique)
+#'   - `create_datetime` (needed because `scenario` isn't unique)
 #'   - `run_stage` ('final_report_ndg2', etc)
 #'   - `file` (path to the `params.json` file, or `.json.gz` containing params)
 prepare_az_table <- function(az_table) {
