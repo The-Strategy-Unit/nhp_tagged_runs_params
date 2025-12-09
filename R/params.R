@@ -7,10 +7,16 @@
 #' @return A named list of parameter objects, one per run. Names come from the
 #'   `dataset` column of `runs_meta`.
 get_all_params <- function(runs_meta, container_results) {
+  unique_names <- runs_meta |>
+    dplyr::mutate(
+      unique_name = glue::glue("{dataset}_{scenario}_{create_datetime}")
+    ) |>
+    dplyr::pull(unique_name)
+
   runs_meta |>
     dplyr::pull(file) |>
     purrr::map(\(path) get_params_for_a_file(container_results, path)) |>
-    purrr::set_names(runs_meta[["dataset"]])
+    purrr::set_names(unique_names)
 }
 
 #' Get Parameters for a Single File
