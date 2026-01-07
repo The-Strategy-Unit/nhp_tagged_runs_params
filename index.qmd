@@ -84,7 +84,7 @@ Results files are stored in an Azure storage container.
 ```{r}
 #| label: get-containers
 
-container_results <- connect_az_container(
+container_results <- azkit::get_container(
   container_name = Sys.getenv("AZ_STORAGE_CONTAINER_RESULTS")
 )
 ```
@@ -92,8 +92,11 @@ container_results <- connect_az_container(
 Read from Azure Table Storage the metadata for runs that have a run stage.
 ```{r}
 #| label: get-meta
-
-meta <- read_az_table() |> prepare_az_table()
+meta <- azkit::read_azure_table(
+  table_name = Sys.getenv("AZ_TABLE_NAME"),
+  table_endpoint = Sys.getenv("AZ_TABLE_EP")
+) |>
+  prepare_az_table()
 knitr::kable(meta)
 ```
 
