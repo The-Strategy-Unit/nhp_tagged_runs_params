@@ -8,10 +8,7 @@
 #'   `dataset` column of `runs_meta`.
 get_all_params <- function(runs_meta, container_results) {
   unique_names <- runs_meta |>
-    dplyr::mutate(
-      unique_name = glue::glue("{dataset}_{scenario}_{create_datetime}")
-    ) |>
-    dplyr::pull(unique_name)
+    glue::glue_data("{dataset}_{scenario}_{create_datetime}")
 
   runs_meta |>
     dplyr::pull(file) |>
