@@ -24,19 +24,12 @@ get_all_params <- function(runs_meta, container_results) {
 #' @param path The blob path to the JSON or gzipped JSON file.
 #' @return A list containing model parameters parsed from the file.
 get_params_for_a_file <- function(container_results, path) {
-  is_zipped <- is_zipped_json(path)
+  is_zipped <- stringr::str_detect(path, "json.gz$")
   if (is_zipped) {
     extract_params_from_zip(container_results, path)
   } else {
     read_params_from_json(container_results, path)
   }
-}
-
-#' Check Whether Path is for a Zipped JSON
-#' @param path A character string representing a blob path.
-#' @return `TRUE` if the path ends with `"json.gz"`, otherwise `FALSE`.
-is_zipped_json <- function(path) {
-  stringr::str_detect(path, "json.gz$")
 }
 
 #' Extract Parameters from Zipped JSON in Blob Storage
