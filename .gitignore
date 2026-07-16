@@ -70,5 +70,7 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# Generated files
 /.quarto/
 /README_files/
+index_files/
