@@ -92,11 +92,13 @@ container_results <- azkit::get_container(
 Read from Azure Table Storage the metadata for runs that have a run stage.
 ```{r}
 #| label: get-meta
+
 meta <- azkit::read_azure_table(
   table_name = Sys.getenv("AZ_TABLE_NAME"),
   table_endpoint = Sys.getenv("AZ_TABLE_EP")
 ) |>
   prepare_az_table()
+
 knitr::kable(meta)
 ```
 

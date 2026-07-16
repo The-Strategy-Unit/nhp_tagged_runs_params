@@ -11,18 +11,21 @@
 #'   - `file` (path to the `params.json` file, or `.json.gz` containing params)
 prepare_az_table <- function(az_table) {
   az_table |>
+    dplyr::filter(!is.na(run_stage)) |> # must have a run-stage label
     dplyr::mutate(
+      .keep = "none",
+      dataset,
+      scenario,
+      create_datetime = create_datetime |>
+        lubridate::ymd_hms() |>
+        format("%Y%m%d_%H%M%S"),
+      run_stage,
       file = dplyr::if_else(
-        is.na(results_dir),
-        results_file,
-        fs::path(results_dir, "params.json") |> as.character()
+        is.na(aggregated_results_path),
+        results_json_gz_path,
+        fs::path(aggregated_results_path, "params.json") |> as.character()
       )
     ) |>
-    dplyr::select(
-      dataset = PartitionKey,
-      scenario,
-      create_datetime,
-      run_stage,
-      file
-    )
+    dplyr::relocate("create_datetime", .after = "scenario") |>
+    dplyr::arrange(.data$dataset, dplyr::desc(.data$create_datetime))
 }
