@@ -45,7 +45,6 @@ Generates and [pins](https://pins.rstudio.com/):
 
 The pins make it easier and faster to ingest params data into products like [the mitigators-comparison app](https://github.com/The-Strategy-Unit/nhp_inputs_report_app), for example.
 This is a workaround because the results files are very large but certain tasks only require the params component.
-In future, the params and results files will be stored separately, reducing the need for this functionality.
 
 ## Products
 
@@ -60,7 +59,7 @@ The steps in this report are to:
 
 1. Read from Azure table storage the metadata for results files that have a run-stage.
 1. Pin their metadata.
-1. Read the params from the corresponding JSON files in Azure blob storage and add them to a named list.
+1. Read from Azure blob storage the scenario parameters for each corresponding `params.json` file (or zipped-JSON file if the scenario was run prior to model v3.1) and add them to a named list.
 1. Pin the params.
 
 The pins will not be updated if there is no new data.
@@ -92,13 +91,17 @@ container_results <- azkit::get_container(
 Read from Azure Table Storage the metadata for runs that have a run stage.
 ```{r}
 #| label: get-meta
+
 meta <- azkit::read_azure_table(
   table_name = Sys.getenv("AZ_TABLE_NAME"),
   table_endpoint = Sys.getenv("AZ_TABLE_EP")
 ) |>
   prepare_az_table()
+
 knitr::kable(meta)
 ```
+
+That's `r nrow(meta)` scenarios with a run-stage value from `r length(unique(meta$dataset))` unique schemes.
 
 #### Pin
 
