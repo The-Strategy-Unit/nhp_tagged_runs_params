@@ -91,15 +91,25 @@ container_results <- azkit::get_container(
 Read from Azure Table Storage the metadata for runs that have a run stage.
 ```{r}
 #| label: get-meta
+#| message: false
 
 meta <- azkit::read_azure_table(
   table_name = Sys.getenv("AZ_TABLE_NAME"),
   table_endpoint = Sys.getenv("AZ_TABLE_EP")
 ) |>
   prepare_az_table()
+```
 
+<details><summary>Show the metadata table.</summary>
+<p>
+
+```{r}
+#| label: print-meta-table
 knitr::kable(meta)
 ```
+
+</p>
+</details>
 
 That's `r nrow(meta)` scenarios with a run-stage value from `r length(unique(meta$dataset))` unique schemes.
 
@@ -123,10 +133,24 @@ This may take a short while.
 
 ```{r}
 #| label: get-params
+#| message: false
 
 params_list <- get_all_params(meta, container_results)
+```
+
+<details><summary>Show the list of params.</summary>
+<p>
+
+```{r}
+#| label: print-params-list
+
 names(params_list)
 ```
+
+</p>
+</details>
+
+That's `r length(params_list)` sets of params.
 
 #### Pin
 
